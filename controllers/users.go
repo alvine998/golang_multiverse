@@ -46,12 +46,14 @@ func (idb *InDB) GetUser(c *gin.Context) {
 
 // Get All Data users
 func (idb *InDB) GetUsers(c *gin.Context) {
+	search := c.Query("search")
+	searchName := "%" + search + "%"
 	var (
 		users  []structs.Users
 		result gin.H
 	)
 
-	idb.DB.Find(&users)
+	idb.DB.Where("name LIKE ?", searchName).Find(&users)
 	if len(users) <= 0 {
 		result = gin.H{
 			"result": nil,
