@@ -2,22 +2,14 @@ package controllers
 
 import (
 	"api/webservice-multiverse/structs"
-	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // to get data with id
 func (idb *InDB) GetUser(c *gin.Context) {
-	errors := godotenv.Load()
-	if errors != nil {
-		fmt.Println(errors)
-	}
-	val := os.Getenv("DB_USERNAME")
 
 	var (
 		users  structs.Users
@@ -27,14 +19,10 @@ func (idb *InDB) GetUser(c *gin.Context) {
 	err := idb.DB.Where("id=?", id).First(&users).Error
 	if err != nil {
 		result = gin.H{
-			"result": err.Error(),
+			"result": err,
 			"count":  0,
 		}
 	} else {
-		if val != "" {
-			fmt.Println(val)
-		}
-		fmt.Println("rootss")
 		result = gin.H{
 			"result": users,
 			"count":  1,
@@ -122,7 +110,10 @@ func (idb *InDB) UpdateUser(c *gin.Context) {
 	if err != nil {
 		result = gin.H{
 			"result": "data not found",
+			"status": "Error",
+			"Code":   http.StatusBadRequest,
 		}
+		c.JSON(http.StatusBadRequest, result)
 	}
 
 	cost := 8
@@ -143,14 +134,16 @@ func (idb *InDB) UpdateUser(c *gin.Context) {
 	if err != nil {
 		result = gin.H{
 			"result": "update failed",
+			"status": "Error",
+			"Code":   http.StatusBadRequest,
 		}
+		c.JSON(http.StatusBadRequest, result)
 	} else {
 		result = gin.H{
 			"result": "successfully update data",
 		}
+		c.JSON(http.StatusOK, result)
 	}
-
-	c.JSON(http.StatusOK, result)
 }
 
 // Delete user by id
@@ -164,18 +157,61 @@ func (idb *InDB) DeleteUser(c *gin.Context) {
 	if err != nil {
 		result = gin.H{
 			"result": "data not found",
+			"status": "Error",
+			"Code":   http.StatusBadRequest,
 		}
+		c.JSON(http.StatusBadRequest, result)
 	}
 	err = idb.DB.Delete(&users).Error
 	if err != nil {
 		result = gin.H{
 			"result": "delete failed",
+			"status": "Error",
+			"Code":   http.StatusBadRequest,
 		}
+		c.JSON(http.StatusBadRequest, result)
 	} else {
 		result = gin.H{
 			"result": "Data deleted successfully",
 		}
+		c.JSON(http.StatusOK, result)
 	}
 
-	c.JSON(http.StatusOK, result)
+}
+
+// Login
+func (idb *InDB) AuthUser(c *gin.Context) {
+	var (
+		users  structs.Users
+		result gin.H
+	)
+	email := c.PostForm("email")
+	password := c.PostForm("password")
+
+	err := idb.DB.Where("email = ?", email).First(&users).Error
+	if err != nil {
+		result = gin.H{
+			"result": "Email not found",
+			"status": "Error",
+			"Code":   http.StatusBadRequest,
+		}
+		c.JSON(http.StatusBadRequest, result)
+	} else {
+		err = bcrypt.CompareHashAndPassword([]byte(users.Password), []byte(password))
+		if err != nil {
+			result = gin.H{
+				"status": "Error",
+				"result": "Invalid Password!",
+				"Code":   http.StatusBadRequest,
+			}
+			c.JSON(http.StatusBadRequest, result)
+		} else {
+			result = gin.H{
+				"status": "Success",
+				"result": "Login Success",
+				"Code":   http.StatusOK,
+			}
+			c.JSON(http.StatusOK, result)
+		}
+	}
 }
