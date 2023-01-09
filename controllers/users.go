@@ -161,6 +161,7 @@ func (idb *InDB) DeleteUser(c *gin.Context) {
 			"Code":   http.StatusBadRequest,
 		}
 		c.JSON(http.StatusBadRequest, result)
+		return
 	}
 	err = idb.DB.Delete(&users).Error
 	if err != nil {
