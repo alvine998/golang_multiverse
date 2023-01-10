@@ -64,23 +64,17 @@ func (idb *InDB) CreateUser(c *gin.Context) {
 		result gin.H
 	)
 
-	name := c.PostForm("name")
-	email := c.PostForm("email")
-	username := c.PostForm("username")
-	phone := c.PostForm("phone")
-	password := c.PostForm("password")
+	if err := c.ShouldBindJSON(&users); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	cost := 8
 	// Hash Password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), cost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(users.Password), cost)
 	if err != nil {
 		panic(err)
 	}
-
-	users.Name = name
-	users.Email = email
-	users.Username = username
-	users.Phone = phone
 	users.Password = string(hashedPassword)
 
 	idb.DB.Create(&users)
@@ -93,12 +87,6 @@ func (idb *InDB) CreateUser(c *gin.Context) {
 // Update user
 func (idb *InDB) UpdateUser(c *gin.Context) {
 	id := c.Query("id")
-
-	name := c.PostForm("name")
-	email := c.PostForm("email")
-	username := c.PostForm("username")
-	phone := c.PostForm("phone")
-	password := c.PostForm("password")
 
 	var (
 		users    structs.Users
@@ -116,17 +104,17 @@ func (idb *InDB) UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, result)
 	}
 
+	if err := c.ShouldBindJSON(&newUsers); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	cost := 8
 	// Hash Password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), cost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUsers.Password), cost)
 	if err != nil {
 		panic(err)
 	}
-
-	newUsers.Name = name
-	newUsers.Email = email
-	newUsers.Username = username
-	newUsers.Phone = phone
 	newUsers.Password = string(hashedPassword)
 
 	err = idb.DB.Model(&users).Updates(newUsers).Error
@@ -183,13 +171,16 @@ func (idb *InDB) DeleteUser(c *gin.Context) {
 // Login
 func (idb *InDB) AuthUser(c *gin.Context) {
 	var (
-		users  structs.Users
-		result gin.H
+		users     structs.Users
+		jsonUsers structs.Users
+		result    gin.H
 	)
-	email := c.PostForm("email")
-	password := c.PostForm("password")
+	if err := c.ShouldBindJSON(&jsonUsers); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err := idb.DB.Where("email = ?", email).First(&users).Error
+	err := idb.DB.Where("email = ?", jsonUsers.Email).First(&users).Error
 	if err != nil {
 		result = gin.H{
 			"result": "Email not found",
@@ -198,7 +189,7 @@ func (idb *InDB) AuthUser(c *gin.Context) {
 		}
 		c.JSON(http.StatusBadRequest, result)
 	} else {
-		err = bcrypt.CompareHashAndPassword([]byte(users.Password), []byte(password))
+		err = bcrypt.CompareHashAndPassword([]byte(users.Password), []byte(jsonUsers.Password))
 		if err != nil {
 			result = gin.H{
 				"status": "Error",

@@ -63,11 +63,10 @@ func (idb *InDB) CreateTestimony(c *gin.Context) {
 		result      gin.H
 	)
 
-	name := c.PostForm("name")
-	notes := c.PostForm("notes")
-
-	testimonies.Name = name
-	testimonies.Notes = notes
+	if err := c.ShouldBindJSON(&testimonies); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	idb.DB.Create(&testimonies)
 	result = gin.H{
@@ -79,9 +78,6 @@ func (idb *InDB) CreateTestimony(c *gin.Context) {
 // Update user
 func (idb *InDB) UpdateTestimony(c *gin.Context) {
 	id := c.Query("id")
-
-	name := c.PostForm("name")
-	notes := c.PostForm("notes")
 
 	var (
 		testimonies    structs.Testimonies
@@ -99,8 +95,10 @@ func (idb *InDB) UpdateTestimony(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, result)
 	}
 
-	newTestimonies.Name = name
-	newTestimonies.Notes = notes
+	if err := c.ShouldBindJSON(&newTestimonies); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	err = idb.DB.Model(&testimonies).Updates(newTestimonies).Error
 

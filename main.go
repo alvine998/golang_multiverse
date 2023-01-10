@@ -4,6 +4,7 @@ import (
 	"api/webservice-multiverse/config"
 	"api/webservice-multiverse/controllers"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -13,6 +14,7 @@ func main() {
 	inDB := &controllers.InDB{DB: db}
 
 	router := gin.Default()
+	router.Use(cors.Default())
 
 	// Router users
 	router.GET("users/:id", inDB.GetUser)
@@ -49,6 +51,9 @@ func main() {
 	router.POST("contents/", inDB.CreateContent)
 	router.PATCH("contents/", inDB.UpdateContent)
 	router.DELETE("contents/:id", inDB.DeleteContent)
+
+	//router mailing
+	router.POST("sending/mail", inDB.SendEmail)
 
 	// Running Port
 	router.Run("127.0.0.1:4000")

@@ -63,11 +63,10 @@ func (idb *InDB) CreateCategory(c *gin.Context) {
 		result     gin.H
 	)
 
-	name := c.PostForm("name")
-	notes := c.PostForm("notes")
-
-	categories.Name = name
-	categories.Notes = notes
+	if err := c.ShouldBindJSON(&categories); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	idb.DB.Create(&categories)
 	result = gin.H{
@@ -79,9 +78,6 @@ func (idb *InDB) CreateCategory(c *gin.Context) {
 // Update user
 func (idb *InDB) UpdateCategory(c *gin.Context) {
 	id := c.Query("id")
-
-	name := c.PostForm("name")
-	notes := c.PostForm("notes")
 
 	var (
 		categories    structs.Categories
@@ -98,9 +94,10 @@ func (idb *InDB) UpdateCategory(c *gin.Context) {
 		}
 		c.JSON(http.StatusBadRequest, result)
 	}
-
-	newCategories.Name = name
-	newCategories.Notes = notes
+	if err := c.ShouldBindJSON(&newCategories); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	err = idb.DB.Model(&categories).Updates(newCategories).Error
 

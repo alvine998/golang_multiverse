@@ -63,11 +63,10 @@ func (idb *InDB) CreateSubcategory(c *gin.Context) {
 		result        gin.H
 	)
 
-	name := c.PostForm("name")
-	notes := c.PostForm("notes")
-
-	subcategories.Name = name
-	subcategories.Notes = notes
+	if err := c.ShouldBindJSON(&subcategories); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	idb.DB.Create(&subcategories)
 	result = gin.H{
@@ -79,9 +78,6 @@ func (idb *InDB) CreateSubcategory(c *gin.Context) {
 // Update user
 func (idb *InDB) UpdateSubcategory(c *gin.Context) {
 	id := c.Query("id")
-
-	name := c.PostForm("name")
-	notes := c.PostForm("notes")
 
 	var (
 		subcategories    structs.Subcategories
@@ -99,8 +95,10 @@ func (idb *InDB) UpdateSubcategory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, result)
 	}
 
-	newSubcategories.Name = name
-	newSubcategories.Notes = notes
+	if err := c.ShouldBindJSON(&newSubcategories); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	err = idb.DB.Model(&subcategories).Updates(newSubcategories).Error
 

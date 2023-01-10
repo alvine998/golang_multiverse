@@ -65,9 +65,12 @@ func (idb *InDB) CreateContent(c *gin.Context) {
 		result   gin.H
 	)
 
-	title := c.PostForm("title")
+	if err := c.ShouldBindJSON(&contents); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	file, err := c.FormFile("image")
-	notes := c.PostForm("notes")
 
 	if err != nil {
 		fmt.Println("Error Retrieving the File")
@@ -90,9 +93,7 @@ func (idb *InDB) CreateContent(c *gin.Context) {
 
 	files := "https://backend.ptmultiverse.com/uploads/" + paths
 
-	contents.Title = title
 	contents.Image = files
-	contents.Notes = notes
 
 	idb.DB.Create(&contents)
 	result = gin.H{
@@ -121,9 +122,12 @@ func (idb *InDB) UpdateContent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, result)
 	}
 
-	title := c.PostForm("title")
+	if err := c.ShouldBindJSON(&newContents); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	file, err := c.FormFile("image")
-	notes := c.PostForm("notes")
 
 	if err != nil {
 		fmt.Println("Error Retrieving the File")
@@ -146,9 +150,7 @@ func (idb *InDB) UpdateContent(c *gin.Context) {
 
 	files := "https://backend.ptmultiverse.com/uploads/" + paths
 
-	newContents.Title = title
 	newContents.Image = files
-	newContents.Notes = notes
 
 	err = idb.DB.Model(&contents).Updates(newContents).Error
 

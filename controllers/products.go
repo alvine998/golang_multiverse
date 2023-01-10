@@ -3,7 +3,6 @@ package controllers
 import (
 	"api/webservice-multiverse/structs"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -64,39 +63,10 @@ func (idb *InDB) CreateProduct(c *gin.Context) {
 		result   gin.H
 	)
 
-	name := c.PostForm("name")
-	stock := c.PostForm("stock")
-	category_id := c.PostForm("category_id")
-	price := c.PostForm("price")
-	notes := c.PostForm("notes")
-	status := c.PostForm("status")
-
-	stocks, err := strconv.Atoi(stock)
-	if err != nil {
-		panic(err)
+	if err := c.ShouldBindJSON(&products); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
-
-	prices, err := strconv.Atoi(price)
-	if err != nil {
-		panic(err)
-	}
-
-	statuss, err := strconv.Atoi(status)
-	if err != nil {
-		panic(err)
-	}
-
-	cat_id, err := strconv.Atoi(category_id)
-	if err != nil {
-		panic(err)
-	}
-
-	products.Name = name
-	products.Stock = stocks
-	products.Category_id = cat_id
-	products.Price = prices
-	products.Notes = notes
-	products.Status = statuss
 
 	idb.DB.Create(&products)
 	result = gin.H{
@@ -108,13 +78,6 @@ func (idb *InDB) CreateProduct(c *gin.Context) {
 // Update user
 func (idb *InDB) UpdateProduct(c *gin.Context) {
 	id := c.Query("id")
-
-	name := c.PostForm("name")
-	stock := c.PostForm("stock")
-	category_id := c.PostForm("category_id")
-	price := c.PostForm("price")
-	notes := c.PostForm("notes")
-	status := c.PostForm("status")
 
 	var (
 		products    structs.Products
@@ -132,32 +95,10 @@ func (idb *InDB) UpdateProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, result)
 	}
 
-	stocks, err := strconv.Atoi(stock)
-	if err != nil {
-		panic(err)
+	if err := c.ShouldBindJSON(&newProducts); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
-
-	prices, err := strconv.Atoi(price)
-	if err != nil {
-		panic(err)
-	}
-
-	statuss, err := strconv.Atoi(status)
-	if err != nil {
-		panic(err)
-	}
-
-	cat_id, err := strconv.Atoi(category_id)
-	if err != nil {
-		panic(err)
-	}
-
-	newProducts.Name = name
-	newProducts.Stock = stocks
-	newProducts.Category_id = cat_id
-	newProducts.Price = prices
-	newProducts.Notes = notes
-	newProducts.Status = statuss
 
 	err = idb.DB.Model(&products).Updates(newProducts).Error
 

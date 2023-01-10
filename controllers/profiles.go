@@ -63,19 +63,10 @@ func (idb *InDB) CreateProfile(c *gin.Context) {
 		result   gin.H
 	)
 
-	name := c.PostForm("name")
-	email := c.PostForm("email")
-	address := c.PostForm("address")
-	phone := c.PostForm("phone")
-	lat := c.PostForm("lat")
-	long := c.PostForm("long")
-
-	profiles.Name = name
-	profiles.Email = email
-	profiles.Address = address
-	profiles.Phone = phone
-	profiles.Lat = lat
-	profiles.Long = long
+	if err := c.ShouldBindJSON(&profiles); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	idb.DB.Create(&profiles)
 	result = gin.H{
@@ -87,13 +78,6 @@ func (idb *InDB) CreateProfile(c *gin.Context) {
 // Update user
 func (idb *InDB) UpdateProfile(c *gin.Context) {
 	id := c.Query("id")
-
-	name := c.PostForm("name")
-	email := c.PostForm("email")
-	address := c.PostForm("address")
-	phone := c.PostForm("phone")
-	lat := c.PostForm("lat")
-	long := c.PostForm("long")
 
 	var (
 		profiles    structs.Profiles
@@ -111,12 +95,10 @@ func (idb *InDB) UpdateProfile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, result)
 	}
 
-	newProfiles.Name = name
-	newProfiles.Email = email
-	newProfiles.Address = address
-	newProfiles.Phone = phone
-	newProfiles.Lat = lat
-	newProfiles.Long = long
+	if err := c.ShouldBindJSON(&newProfiles); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	err = idb.DB.Model(&profiles).Updates(newProfiles).Error
 
