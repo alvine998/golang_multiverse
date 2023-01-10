@@ -47,6 +47,8 @@ func main() {
 	router.GET("contents/:id", inDB.GetContent)
 	router.GET("contents/", inDB.GetContents)
 	router.POST("contents/", inDB.CreateContent)
+	router.PATCH("contents/", inDB.UpdateContent)
+	router.DELETE("contents/:id", inDB.DeleteContent)
 
 	// Running Port
 	router.Run("127.0.0.1:4000")

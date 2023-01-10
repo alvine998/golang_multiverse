@@ -4,6 +4,7 @@ import (
 	"api/webservice-multiverse/structs"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -77,7 +78,9 @@ func (idb *InDB) CreateContent(c *gin.Context) {
 	fmt.Printf("File Size: %+v\n", file.Size)
 	fmt.Printf("MIME Header: %+v\n", file.Header)
 
-	filePath := "./uploads/" + file.Filename
+	paths := strings.Replace(file.Filename, " ", "_", -1)
+
+	filePath := "./uploads/" + paths
 
 	err = c.SaveUploadedFile(file, filePath)
 	if err != nil {
@@ -85,8 +88,10 @@ func (idb *InDB) CreateContent(c *gin.Context) {
 		return
 	}
 
+	files := "https://backend.ptmultiverse.com/uploads/" + paths
+
 	contents.Title = title
-	contents.Image = file.Filename
+	contents.Image = files
 	contents.Notes = notes
 
 	idb.DB.Create(&contents)
@@ -96,78 +101,100 @@ func (idb *InDB) CreateContent(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// // Update user
-// func (idb *InDB) UpdateContent(c *gin.Context) {
-// 	id := c.Query("id")
+// Update user
+func (idb *InDB) UpdateContent(c *gin.Context) {
+	id := c.Query("id")
 
-// 	title := c.PostForm("title")
-// 	notes := c.PostForm("notes")
+	var (
+		contents    structs.Contents
+		newContents structs.Contents
+		result      gin.H
+	)
 
-// 	var (
-// 		contents    structs.Contents
-// 		newContents structs.Contents
-// 		result      gin.H
-// 	)
+	err := idb.DB.First(&contents, id).Error
+	if err != nil {
+		result = gin.H{
+			"result": "data not found",
+			"status": "Error",
+			"Code":   http.StatusBadRequest,
+		}
+		c.JSON(http.StatusBadRequest, result)
+	}
 
-// 	err := idb.DB.First(&contents, id).Error
-// 	if err != nil {
-// 		result = gin.H{
-// 			"result": "data not found",
-// 			"status": "Error",
-// 			"Code":   http.StatusBadRequest,
-// 		}
-// 		c.JSON(http.StatusBadRequest, result)
-// 	}
+	title := c.PostForm("title")
+	file, err := c.FormFile("image")
+	notes := c.PostForm("notes")
 
-// 	newContents.Name = name
-// 	newContents.Notes = notes
+	if err != nil {
+		fmt.Println("Error Retrieving the File")
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("Uploaded File: %+v\n", file.Filename)
+	fmt.Printf("File Size: %+v\n", file.Size)
+	fmt.Printf("MIME Header: %+v\n", file.Header)
 
-// 	err = idb.DB.Model(&contents).Updates(newContents).Error
+	paths := strings.Replace(file.Filename, " ", "_", -1)
 
-// 	if err != nil {
-// 		result = gin.H{
-// 			"result": "update failed",
-// 			"status": "Error",
-// 			"Code":   http.StatusBadRequest,
-// 		}
-// 		c.JSON(http.StatusBadRequest, result)
-// 	} else {
-// 		result = gin.H{
-// 			"result": "successfully update data",
-// 		}
-// 		c.JSON(http.StatusOK, result)
-// 	}
-// }
+	filePath := "./uploads/" + paths
 
-// // Delete user by id
-// func (idb *InDB) DeleteContent(c *gin.Context) {
-// 	var (
-// 		contents structs.Contents
-// 		result   gin.H
-// 	)
-// 	id := c.Param("id")
-// 	err := idb.DB.First(&contents, id).Error
-// 	if err != nil {
-// 		result = gin.H{
-// 			"result": "data not found",
-// 			"status": "Error",
-// 			"Code":   http.StatusBadRequest,
-// 		}
-// 		c.JSON(http.StatusBadRequest, result)
-// 	}
-// 	err = idb.DB.Delete(&contents).Error
-// 	if err != nil {
-// 		result = gin.H{
-// 			"result": "delete failed",
-// 			"status": "Error",
-// 			"Code":   http.StatusBadRequest,
-// 		}
-// 		c.JSON(http.StatusBadRequest, result)
-// 	} else {
-// 		result = gin.H{
-// 			"result": "Data deleted successfully",
-// 		}
-// 		c.JSON(http.StatusOK, result)
-// 	}
+	err = c.SaveUploadedFile(file, filePath)
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("upload file err: %s", err.Error()))
+		return
+	}
 
-// }
+	files := "https://backend.ptmultiverse.com/uploads/" + paths
+
+	newContents.Title = title
+	newContents.Image = files
+	newContents.Notes = notes
+
+	err = idb.DB.Model(&contents).Updates(newContents).Error
+
+	if err != nil {
+		result = gin.H{
+			"result": "update failed",
+			"status": "Error",
+			"Code":   http.StatusBadRequest,
+		}
+		c.JSON(http.StatusBadRequest, result)
+	} else {
+		result = gin.H{
+			"result": "successfully update data",
+		}
+		c.JSON(http.StatusOK, result)
+	}
+}
+
+// Delete user by id
+func (idb *InDB) DeleteContent(c *gin.Context) {
+	var (
+		contents structs.Contents
+		result   gin.H
+	)
+	id := c.Param("id")
+	err := idb.DB.First(&contents, id).Error
+	if err != nil {
+		result = gin.H{
+			"result": "data not found",
+			"status": "Error",
+			"Code":   http.StatusBadRequest,
+		}
+		c.JSON(http.StatusBadRequest, result)
+	}
+	err = idb.DB.Delete(&contents).Error
+	if err != nil {
+		result = gin.H{
+			"result": "delete failed",
+			"status": "Error",
+			"Code":   http.StatusBadRequest,
+		}
+		c.JSON(http.StatusBadRequest, result)
+	} else {
+		result = gin.H{
+			"result": "Data deleted successfully",
+		}
+		c.JSON(http.StatusOK, result)
+	}
+}
