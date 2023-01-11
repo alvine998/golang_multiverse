@@ -9,12 +9,21 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+func CORSConfig() cors.Config {
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{"*"}
+	corsConfig.AllowCredentials = true
+	corsConfig.AddAllowHeaders("Access-Control-Allow-Headers", "access-control-allow-origin, access-control-allow-headers", "Content-Type", "X-XSRF-TOKEN", "Accept", "Origin", "X-Requested-With", "Authorization")
+	corsConfig.AddAllowMethods("GET", "POST", "PUT", "DELETE")
+	return corsConfig
+}
+
 func main() {
 	db := config.DBInit()
 	inDB := &controllers.InDB{DB: db}
 
 	router := gin.Default()
-	router.Use(cors.Default())
+	router.Use(cors.New(CORSConfig()))
 
 	// Router users
 	router.GET("users/:id", inDB.GetUser)
@@ -51,6 +60,20 @@ func main() {
 	router.POST("contents/", inDB.CreateContent)
 	router.PATCH("contents/", inDB.UpdateContent)
 	router.DELETE("contents/:id", inDB.DeleteContent)
+
+	// router profiles
+	router.GET("profiles/:id", inDB.GetProfile)
+	router.GET("profiles/", inDB.GetProfiles)
+	router.POST("profiles/", inDB.CreateProfile)
+	router.PATCH("profiles/", inDB.UpdateProfile)
+	router.DELETE("profiles/:id", inDB.DeleteProfile)
+
+	// router testimonies
+	router.GET("testimonies/:id", inDB.GetTestimony)
+	router.GET("testimonies/", inDB.GetTestimonies)
+	router.POST("testimonies/", inDB.CreateTestimony)
+	router.PATCH("testimonies/", inDB.UpdateTestimony)
+	router.DELETE("testimonies/:id", inDB.DeleteTestimony)
 
 	//router mailing
 	router.POST("sending/mail", inDB.SendEmail)
