@@ -19,13 +19,14 @@ func DBInit() *gorm.DB {
 
 	Username := os.Getenv("DB_USERNAME")
 	Name := os.Getenv("DB_NAME")
+	Password := os.Getenv("DB_PASSWORD")
 	if Username != "" {
 		Username = "root"
 	}
 	if Name != "" {
 		Name = "multiverse_go"
 	}
-	Url := fmt.Sprintf("%v:@tcp(127.0.0.1:3306)/%v?parseTime=true", Username, Name)
+	Url := fmt.Sprintf("%v:%v@tcp(127.0.0.1:3306)/%v?parseTime=true", Username, Name, Password)
 
 	db, err := gorm.Open("mysql", Url)
 	if err != nil {
